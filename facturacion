@@ -1,0 +1,81 @@
+# This is a sample Python script.
+
+import pandas as pd
+from datetime import date
+import datetime
+import os
+import math
+import csv
+
+# Press Mayús+F10 to execute it or replace it with your code.
+# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+
+def print_uso_equipo(anio, mes, mes_letra, tarifa, dframe, writer):
+    dias_mes = [31,28,31,30,31,30,31,31,30,31,30,31]
+
+    mes_ini = datetime.datetime(anio, mes, 1,0,0,0,0)
+    mes_fin = datetime.datetime(anio, mes, dias_mes[mes-1],0,0,0,0)
+    mes_dias = dias_mes[mes-1]
+    erow = []
+
+    dframe["alta"] = pd.to_datetime(dframe["Fecha de entrega"], format="%d/%m/%Y")
+    dframe["baja"] = pd.to_datetime(dframe["Fecha de Baja"], format="%d/%m/%Y")
+    knt = 0
+    total = 0.0
+    erow.append("Folio")
+    erow.append("Serie")
+    erow.append("F. entrega")
+    erow.append("F- baja")
+    erow.append("Dias uso")
+    erow.append("Impte. equipo")
+    writer.writerow(erow)
+    erow.clear()
+
+    for row in dframe.itertuples():
+        if row[5] <= mes_fin and row[6] >= mes_ini:
+        #if row[5] <= mes_fin and row[5] >= mes_ini:
+            dias = min(mes_fin, row[6]) - max(mes_ini,row[5])
+            dias = dias.days + 1
+            if dias == mes_dias:
+                importe = tarifa
+            else:
+                importe = dias * tarifa / 30.0
+            importe = float("{:.2f}".format(importe))
+            erow.append(row[1])
+            erow.append(row[2])
+            erow.append(row[3])
+            erow.append(row[4])
+            erow.append(dias)
+            erow.append(importe)
+            print(row[1], row[2], row[3], row[4], "dias:", dias + 1, " importe: $", importe)
+            writer.writerow(erow)
+            erow.clear()
+
+            knt = knt + 1
+            total = total + importe
+    print("\n", knt, " registros, con un total de: $", total, "  para el mes ", mes_letra, "  de ", anio)
+    #writer.writerow(row[1], row[2], row[3], row[4], dias + 1, importe)
+
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
+    nombre_mes = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE", \
+    "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"]
+    os.chdir("C:/Users/jbello/Documents/2021/Contratos")
+
+    #df = pd.read_csv("RESGUARDOS-STE.csv")
+    #tarifa_mes = 463.02
+    df = pd.read_csv("RESGUARDOS-BSS-AR.csv")
+    tarifa_mes = 957.97
+    anio_a_calcular = 2021
+    mes_a_calcular = 6
+    #for mes in range(1,7):
+    #    print(mes)
+    #nombre_salida = "equipos_pago_" + nombre_mes[mes_a_calcular-1] + ".csv"
+    nombre_salida = "bss_equipos_pago_" + nombre_mes[mes_a_calcular-1] + ".csv"
+    f = open(nombre_salida, 'w', newline='', encoding='utf-8')
+    writer = csv.writer(f)
+    df2 = df.set_index("Folio", drop=False)
+    print_uso_equipo(anio_a_calcular, mes_a_calcular, nombre_mes[mes_a_calcular-1], tarifa_mes, df2, writer)
+    f.close()
+
+# See PyCharm help at https://www.jetbrains.com/help/pycharm/
